@@ -1,0 +1,2 @@
+defmodule Spout do
+end
