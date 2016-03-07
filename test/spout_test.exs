@@ -90,25 +90,25 @@ defmodule SpoutTest do
 
   # Private functions
   defp passing_test(line, number, test, return) do
-    test_name = atom_to_binary(test, :utf8)
-    number_bin = integer_to_binary(number)
-    return_bin = list_to_binary(:io_lib.format("~w", [return]))
-    expected = <<"ok ", number_bin/binary, " ", test_name/binary, " return value: ", return_bin/binary>>
+    test_name = Atom.to_binary(test, :utf8)
+    number_bin = Integer.to_binary(number)
+    return_bin = List.to_binary(:io_lib.format("~w", [return]))
+    expected = <<"ok ", number_bin, " ", test_name, " return value: ", return_bin>>
     ^expected = line
   end
 
   defp failing_test(line, number, test) do
-    failing_test(line, number, test, undefined)
+    failing_test(line, number, test, :undefined)
   end
   defp failing_test(line, number, test, reason) do
-    test_name = atom_to_binary(test, :latin1)
-    number_bin = integer_to_binary(number)
-    expected = <<"not ok ", number_bin/binary, " ", test_name/binary, " reason:">>
+    test_name = Atom.to_binary(test, :latin1)
+    number_bin = Integer.to_binary(number)
+    expected = <<"not ok ", number_bin, " ", test_name, " reason:">>
     case reason do
       :undefined ->
         {0, _} = :binary.match(line, expected, [])
           _ when is_binary(reason) ->
-            expected_with_reason = <<expected/binary, " ", reason/binary>>
+            expected_with_reason = <<expected, " ", reason>>
             {0, _} = :binary.match(line, expected_with_reason, [])
             end
   end
@@ -117,22 +117,22 @@ defmodule SpoutTest do
     skipped_test(line, number, test, :undefined)
   end
   defp skipped_test(line, number, test, reason) do
-    test_name = atom_to_binary(test, :latin1)
-    number_bin = integer_to_binary(number)
-    expected = <<"ok ", number_bin/binary, " ", test_name/binary, " # SKIP">>
+    test_name = Atom.to_binary(test, :latin1)
+    number_bin = Integer.to_binary(number)
+    expected = <<"ok ", number_bin, " ", test_name, " # SKIP">>
     case reason do
       :undefined ->
         {0, _} = :binary.match(line, expected, [])
           _ ->
-            real_expected = <<expected/binary, " ", reason/binary>>
+            real_expected = <<expected, " ", reason>>
             ^real_expected = line
         end
   end
 
   defp todo_test(line, number, test) do
-    test_name = atom_to_binary(test, :latin1)
-    number_bin = integer_to_binary(number)
-    expected = <<"not ok ", number_bin/binary, " ", test_name/binary, " # TODO">>
+    test_name = Atom.to_binary(test, :latin1)
+    number_bin = Integer.to_binary(number)
+    expected = <<"not ok ", number_bin, " ", test_name, " # TODO">>
     ^expected = line
   end
 end
