@@ -4,6 +4,13 @@ defmodule SpoutTest do
   ExUnit.configure include: "example_tests/*"
   ExUnit.start
 
+  @tag :skip
+  test "badmatch example" do
+    a = [{:foo, :bar, :baz}, {:foo, :bar, :bar}, {:foo, :bar, :baz}, {:foo, :bar, :baz}]
+    b = [{:foo, :bar, :baz}, {:foo, :bar, :baz}, {:foo, :bar, :baz}, {:foo, :bar, :baz}]
+    assert a == b
+  end
+
   test "validate output" do
     # Copied from init_per_suite
     {:ok, tap_output} = :file.read_file("../example_cttap/test.tap")
@@ -26,9 +33,9 @@ defmodule SpoutTest do
     "# Completed cttap_usage_passing_SUITE" = suite_footer
 
     # Passing tests
-    passing_test(passing1, 1, passing_test_1, ok)
-    passing_test(passing2, 2, passing_test_2, ok)
-    passing_test(passing3, 3, passing_test_3, ok)
+    passing_test(passing_1, 1, :passing_test_1, :ok)
+    passing_test(passing_2, 2, :passing_test_2, :ok)
+    passing_test(passing_3, 3, :passing_test_3, :ok)
 
     # Next is the skipped test suite
     [skipped_suite_header, skipped_suite_footer|usage_suite] = skipped_suite
@@ -36,55 +43,49 @@ defmodule SpoutTest do
     "# Skipped cttap_usage_bail_out_SUITE" = skipped_suite_footer
 
     # Then the usage suite
-    [UsageSuiteHeader, PassingOk, Failing, PassingDescription, Todo, Skip, Diagnostic|Groups] = UsageSuite
-    passing_test(PassingOk, 4, :passing_test, :ok)
-    failing_test(Failing, 5, :failing_test)
-    passing_test(PassingDescription, 6, :test_description, :ok)
-    todo_test(Todo, 7, :todo_test)
-    skipped_test(Skip, 8, :skip_test, "I'm lazy")
-    passing_test(Diagnostic, 9, :diagnostic_test, :ok)
+    [usage_suite_header, passing_ok, failing, passing_description, todo, skip, diagnostic|groups] = usage_suite
+    passing_test(passing_ok, 4, :passing_test, :ok)
+    failing_test(failing, 5, :failing_test)
+    passing_test(passing_description, 6, :test_description, :ok)
+    todo_test(todo, 7, :todo_test)
+    skipped_test(skip, 8, :skip_test, "I'm lazy")
+    passing_test(diagnostic, 9, :diagnostic_test, :ok)
 
     # First group
-    [PassingGroupHeader, PassingGroupTest, PassingGroupFooter|FailingGroup] = Groups
-    "# Starting passing group" = PassingGroupHeader
-    passing_test(PassingGroupTest, 10, :passing_test_in_group, :ok)
-    "# Completed passing group. return value: ok" = PassingGroupFooter
+    [passing_group_header, passing_group_test, passing_group_footer|failing_group] = groups
+    "# Starting passing group" = passing_group_header
+    passing_test(passing_group_test, 10, :passing_test_in_group, :ok)
+    "# Completed passing group. return value: ok" = passing_group_footer
 
     # Failing group
-    [FailingGroupHeader, FailingGroupTest, FailingGroupFooter|DescriptionGroup] = FailingGroup
-    "# Starting failing group" = FailingGroupHeader
-    failing_test(FailingGroupTest, 11, :failing_test_in_group, "{{badmatch,2},[{cttap_usage_SUITE,failing_test_in_group,1")
-    "# Completed failing group. return value: ok" = FailingGroupFooter
+    [failing_group_header, failing_group_test, failing_group_footer|description_group] = failing_group
+    "# Starting failing group" = failing_group_header
+    failing_test(failing_group_test, 11, :failing_test_in_group, "{{badmatch,2},[{cttap_usage_SUITE,failing_test_in_group,1")
+    "# Completed failing group. return value: ok" = failing_group_footer
 
     # Description group
-    [DescriptionGroupHeader, DescriptionGroupTest, DescriptionGroupFooter|TodoGroup] = DescriptionGroup,
-    <<"# Starting description group">> = DescriptionGroupHeader,
-    passing_test(DescriptionGroupTest, 12, test_description_in_group, ok),
-    <<"# Completed description group. return value: ok">> = DescriptionGroupFooter,
+    [description_group_header, description_group_test, description_group_footer|todo_group] = description_group
+    <<"# Starting description group">> = description_group_header
+    passing_test(description_group_test, 12, :test_description_in_group, :ok)
+    <<"# Completed description group. return value: ok">> = description_group_footer
 
     # Todo group
-    [TodoGroupHeader, TodoGroupTest, TodoGroupFooter|OrderGroup] = TodoGroup,
-    <<"# Starting todo group">> = TodoGroupHeader,
-    todo_test(TodoGroupTest, 13, todo_test_in_group),
-    <<"# Completed todo group. return value: ok">> = TodoGroupFooter,
+    [todo_group_header, todo_group_test, todo_group_footer|order_group] = todo_group
+    "# Starting todo group" = todo_group_header
+    todo_test(todo_group_test, 13, :todo_test_in_group)
+    "# Completed todo group. return value: ok" = todo_group_footer
 
     # Order group
-    [OrderGroupHeader, OrderGroupTest1, OrderGroupTest2, OrderGroupTest3, OrderGroupFooter, UsageSuiteFooter, _] = OrderGroup,
-    <<"# Starting order group">> = OrderGroupHeader,
-    passing_test(OrderGroupTest1, 14, group_order_1, ok),
-    failing_test(OrderGroupTest2, 15, group_order_2, <<"{{badmatch,2},[{cttap_usage_SUITE,group_order_2,1,[{">>),
-    passing_test(OrderGroupTest3, 16, group_order_3, ok),
-    <<"# Completed order group. return value: ok">> = OrderGroupFooter,
+    [order_group_header, order_group_test_1, order_group_test_2, order_group_test_3, order_group_footer, usage_suite_footer, _] = order_group
+    "# Starting order group" = order_group_header
+    passing_test(order_group_test_1, 14, :group_order_1, :ok)
+    failing_test(order_group_test_2, 15, :group_order_2, "{{badmatch,2},[{cttap_usage_SUITE,group_order_2,1,[{")
+    passing_test(order_group_test_3, 16, :group_order_3, :ok)
+    "# Completed order group. return value: ok" = order_group_footer
 
     # Header and footer include the suite name
-    <<"# Starting cttap_usage_SUITE">> = UsageSuiteHeader,
-    <<"# Completed cttap_usage_SUITE">> = UsageSuiteFooter,
-  end
-
-  test "badmatch" do
-    a = [{:foo, :bar, :baz}, {:foo, :bar, :bar}, {:foo, :bar, :baz}, {:foo, :bar, :baz}]
-    b = [{:foo, :bar, :baz}, {:foo, :bar, :baz}, {:foo, :bar, :baz}, {:foo, :bar, :baz}]
-    assert a == b
+    "# Starting cttap_usage_SUITE" = usage_suite_header
+    "# Completed cttap_usage_SUITE" = usage_suite_footer
   end
 
   # Private functions
@@ -134,3 +135,4 @@ defmodule SpoutTest do
     expected = <<"not ok ", number_bin/binary, " ", test_name/binary, " # TODO">>
     ^expected = line
   end
+end
