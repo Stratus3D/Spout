@@ -5,6 +5,8 @@ defmodule Spout.Mixfile do
     [app: :spout,
      version: "0.0.1",
      elixir: "~> 1.0",
+     description: description,
+     package: package,
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
      deps: deps]
@@ -28,5 +30,20 @@ defmodule Spout.Mixfile do
   # Type `mix help deps` for more examples and options
   defp deps do
     []
+  end
+
+  defp description do
+    """
+    A TAP producer that integrates with existing ExUnit tests via an ExUnit formatter
+    """
+  end
+
+  defp package do
+    [# These are the default files included in the package
+      files: ["lib", "priv", "mix.exs", "README.md", "LICENSE"],
+      maintainers: ["Trevor Brown"],
+      licenses: ["MIT"],
+      links: %{"GitHub" => "https://github.com/Stratus3D/Spout"}
+    ]
   end
 end
