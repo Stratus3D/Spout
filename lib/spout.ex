@@ -7,6 +7,8 @@ defmodule Spout do
 
   use GenEvent
 
+  @default_tap_file "tap_output"
+
   ## Formatter callbacks: may use opts in the future to configure file name pattern
   def init(_opts) do
     {:ok, []}
@@ -44,4 +46,55 @@ defmodule Spout do
   def handle_event(_event, config) do
     {:ok, config}
   end
+
+  # Private functions
+  defp version() do
+    "TAP version 13"
+  end
+
+  defp test_plan_line(num_tests) do
+    :io_lib.format("1..~B", [num_tests])
+  end
+
+  # I can't think of a reason all the test suites would need to abort
+  #defp bail_out(reason) do
+  #    :io_lib.format("Bail out! ~s", [Reason])
+  #end
+
+  # I can't think of a reason all the test suites would need to be skipped
+  #defp test_plan_line_skip(NumTests, Reason) do
+  #    :io_lib.format("1..~B ~s", [NumTests, Reason])
+  #end
+
+  defp test_success(number, description) do
+    :io_lib.format("ok ~B ~s", [number, description])
+  end
+
+  defp test_fail(number, description) do
+    :io_lib.format("not ok ~B ~s", [number, description])
+  end
+
+  defp test_skip(number, description, reason) do
+    :io_lib.format("ok ~B ~s # SKIP ~s", [number, description, reason])
+  end
+
+  defp test_todo(number, description, reason) do
+    case reason do
+      undefined ->
+        :io_lib.format("not ok ~B ~s # TODO", [number, description])
+      _ ->
+        :io_lib.format("not ok ~B ~s # TODO ~s", [number, description, reason])
+    end
+  end
+
+  defp diagnostic_line(message) do
+    ["# "|message]
+  end
+
+  # We currently don't need this function
+  #diagnostic_multiline(Message) when is_list(Message) ->
+  #    diagnostic_multiline(list_to_binary(Message));
+  #diagnostic_multiline(Message) when is_binary(Message) ->
+  #    Lines = binary:split(Message, <<"~n">>, [global]),
+  #    [diagnostic_line(Line) || Line <- Lines].
 end
