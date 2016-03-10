@@ -14,6 +14,11 @@ defmodule Spout do
     {:ok, []}
   end
 
+  def handle_event({:suite_started, _opts}, config) do
+    # TODO: Add header
+    {:ok, config}
+  end
+
   def handle_event({:suite_finished, _run_us, _load_us}, _config) do
     # do the real magic
     #suites = Enum.map config, &generate_testsuite_tap/1
