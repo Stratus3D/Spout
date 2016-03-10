@@ -1,6 +1,8 @@
 defmodule SpoutTest do
   use ExUnit.Case
 
+  # TODO: Figure out how to run an ExUnit test suite within this one. This
+  # command does not start another ExUnit run with the tests in example_tests/
   ExUnit.configure include: "example_tests/*"
   ExUnit.start
 
