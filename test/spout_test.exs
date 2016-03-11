@@ -3,8 +3,11 @@ defmodule SpoutTest do
 
   # TODO: Figure out how to run an ExUnit test suite within this one. This
   # command does not start another ExUnit run with the tests in example_tests/
-  ExUnit.configure include: "example_tests/*"
-  ExUnit.start
+  setup do
+    ExUnit.configure test_paths: ["example_tests"]
+    ExUnit.start
+    :ok
+  end
 
   @tag :skip
   test "badmatch example" do
@@ -15,7 +18,9 @@ defmodule SpoutTest do
 
   test "validate output" do
     # Copied from init_per_suite
-    {:ok, tap_output} = :file.read_file("../example_cttap/test.tap")
+
+    path = Mix.Project.build_path <> "/test_report.tap"
+    {:ok, tap_output} = :file.read_file(path)
     IO.inspect(tap_output)
 
     lines = :binary.split(tap_output, "\n", [:global])
