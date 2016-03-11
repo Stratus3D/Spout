@@ -19,14 +19,14 @@ defmodule Spout do
     {:ok, config}
   end
 
-  def handle_event({:suite_finished, _run_us, _load_us}, _config) do
+  def handle_event({:suite_finished, _run_us, _load_us}, config) do
     # do the real magic
     #suites = Enum.map config, &generate_testsuite_tap/1
 
     # save the report in an xml file
-    #file = File.open! get_file_name(config), [:write]
+    file = File.open! get_file_name(config), [:write]
     #IO.binwrite file, result
-    #File.close file
+    File.close file
 
     # Release handler
     :remove_handler
@@ -102,4 +102,9 @@ defmodule Spout do
   #diagnostic_multiline(Message) when is_binary(Message) ->
   #    Lines = binary:split(Message, <<"~n">>, [global]),
   #    [diagnostic_line(Line) || Line <- Lines].
+
+  defp get_file_name(_config) do
+    report = Application.get_env :spout, :filename, "test_report.tap"
+    Mix.Project.build_path <> "/" <> report
+  end
 end
