@@ -16,16 +16,19 @@ defmodule Spout do
 
   def handle_event({:suite_started, _opts}, config) do
     # TODO: Add header
+
     {:ok, config}
   end
 
   def handle_event({:suite_finished, _run_us, _load_us}, config) do
-    # do the real magic
-    #suites = Enum.map config, &generate_testsuite_tap/1
+    # Generate the TAP lines
+    tap_output = tapify(config, 0)
 
-    # save the report in an xml file
+    # Save the report to file
     file = File.open! get_file_name(config), [:write]
-    #IO.binwrite file, result
+    List.foreach(fn(line) ->
+                          :io.format(file, "~s~n", [line])
+                  end, tap_output)
     File.close file
 
     # Release handler
@@ -53,6 +56,55 @@ defmodule Spout do
   end
 
   # Private functions
+  defp tapify(data, total) do
+    {output, _Count} = process_suites(data, 1, [])
+    [version(), test_plan_line(total) |Enum.reverse(output)]
+  end
+
+  defp process_suites([], count, output) do
+    {output, count}
+  end
+  defp process_suites([{:suites, suite, status, _Num, test_cases}|suites], count, output) do
+    header = diagnostic_line(["Starting ", Atom.to_list(suite)])
+    footer = case status do
+                 :skipped ->
+                     diagnostic_line(["Skipped ", Atom.to_list(suite)])
+                 :ran ->
+                     diagnostic_line(["Completed ", Atom.to_list(suite)])
+             end
+    {testcase_output, new_count} = process_testcases(test_cases, count, [header|output])
+    process_suites(suites, new_count, [footer|testcase_output])
+  end
+
+  defp process_testcases([], count, output) do
+    {output, count}
+  end
+  defp process_testcases([{:group, name, return, group_test_cases}|test_cases], count, output) do
+    header = diagnostic_line(["Starting ", Atom.to_list(name), " group"])
+    footer = diagnostic_line(["Completed ", Atom.to_list(name), " group. return value: ", :io_lib.format("~w", [return])])
+    {new_output, new_count} = process_testcases(group_test_cases, count, [header|output])
+    process_testcases(test_cases, new_count, [footer|new_output])
+  end
+  defp process_testcases([{:testcase, name, return, _Num}|test_cases], count, output) do
+    # TODO: Figure out how to access the IO log here and log IO as diagnostic output
+    line = case return do
+        {:skip, :todo} ->
+            test_todo(count, name, :undefined)
+        {:skip, reason} ->
+            test_skip(count, name, reason)
+        {:error, reason} ->
+            test_fail(count, [Atom.to_list(name), " reason: ", :io_lib.format("~w", [reason])])
+        value ->
+            test_success(count, [Atom.to_list(name), " return value: ", :io_lib.format("~w", [value])])
+    end
+    process_testcases(test_cases, count + 1, [line|output])
+  end
+
+  defp timestamp() do
+    :os.timestamp()
+  end
+
+  # Private TAP functions
   defp version() do
     "TAP version 13"
   end
@@ -85,7 +137,7 @@ defmodule Spout do
 
   defp test_todo(number, description, reason) do
     case reason do
-      undefined ->
+      :undefined ->
         :io_lib.format("not ok ~B ~s # TODO", [number, description])
       _ ->
         :io_lib.format("not ok ~B ~s # TODO ~s", [number, description, reason])
