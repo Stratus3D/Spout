@@ -9,7 +9,7 @@ defmodule Spout.Mixfile do
      package: package,
      build_embedded: Mix.env == :prod,
      start_permanent: Mix.env == :prod,
-     test_paths: ["example_tests", "test"],
+     test_paths: ["test"],
      deps: deps]
   end
 
