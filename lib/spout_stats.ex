@@ -9,7 +9,9 @@ defmodule SpoutStats do
   failures: 0,
   skipped: 0,
   tests: 0,
+  total: 0,
   time: 0,
+  timestamp: nil,
   test_cases: []
 
   @type t :: %__MODULE__{
@@ -17,7 +19,9 @@ defmodule SpoutStats do
     failures: non_neg_integer,
     skipped: non_neg_integer,
     tests: non_neg_integer,
+    total: non_neg_integer,
     time: non_neg_integer,
+    timestamp: :os.timestamp,
     test_cases: [ExUnit.Test.t]
   }
 end
