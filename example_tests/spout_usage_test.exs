@@ -1,4 +1,4 @@
-defmodule SpoutTest do
+defmodule SpoutUsageTest do
   use ExUnit.Case
 
   test "the truth" do
