@@ -39,16 +39,21 @@ defmodule Spout do
     {:ok, config}
   end
 
-  def handle_event({:test_finished, %ExUnit.Test{state: {:skip, _}}}, config) do
-    {:ok, config}
+  def handle_event({:test_finished, %ExUnit.Test{state: {:skip, _}} = test}, config) do
+    data = {:testcase, test, :skipped, :timer.now_diff(timestamp(), config.timestamp)}
+    {:ok, Keyword.put(config, :test_cases, [data|config.test_cases])}
   end
 
-  def handle_event({:test_finished, %ExUnit.Test{state: {:failed, _failed}}}, config) do
-    {:ok, config}
+  def handle_event({:test_finished, %ExUnit.Test{state: {:failed, _failed}} = test}, config) do
+    return = :failed # TODO: Figure out the real return value
+    data = {:testcase, test, return, :timer.now_diff(timestamp(), config.timestamp)}
+    {:ok, Keyword.put(config, :test_cases, [data|config.test_cases])}
   end
 
-  def handle_event({:test_finished, %ExUnit.Test{state: {:invalid, _module}}}, config) do
-    {:ok, config}
+  def handle_event({:test_finished, %ExUnit.Test{state: {:invalid, _module}} = test}, config) do
+    return = :invalid # TODO: Figure out the real return value
+    data = {:testcase, test, return, :timer.now_diff(timestamp(), config.timestamp)}
+    {:ok, Keyword.put(config, :test_cases, [data|config.test_cases])}
   end
 
   def handle_event(_event, config) do
@@ -78,12 +83,6 @@ defmodule Spout do
 
   defp process_testcases([], count, output) do
     {output, count}
-  end
-  defp process_testcases([{:group, name, return, group_test_cases}|test_cases], count, output) do
-    header = diagnostic_line(["Starting ", Atom.to_list(name), " group"])
-    footer = diagnostic_line(["Completed ", Atom.to_list(name), " group. return value: ", :io_lib.format("~w", [return])])
-    {new_output, new_count} = process_testcases(group_test_cases, count, [header|output])
-    process_testcases(test_cases, new_count, [footer|new_output])
   end
   defp process_testcases([{:testcase, name, return, _Num}|test_cases], count, output) do
     # TODO: Figure out how to access the IO log here and log IO as diagnostic output
