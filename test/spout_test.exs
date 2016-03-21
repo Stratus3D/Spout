@@ -3,9 +3,8 @@ defmodule SpoutTest do
 
   # TODO: Figure out how to run an ExUnit test suite within this one. This
   # command does not start another ExUnit run with the tests in example_tests/
-  setup do
-    ExUnit.configure test_paths: ["example_tests"]
-    ExUnit.start
+  setup_all do
+    {_result, 1} = System.cmd("mix", ["test", "example_tests"])
     :ok
   end
 
