@@ -7,7 +7,7 @@ defmodule Spout do
 
   use GenEvent
 
-  @default_tap_file "tap_output"
+  @default_tap_filename "tap_output"
 
   ## Formatter callbacks: may use opts in the future to configure file name pattern
   def init(_opts) do
@@ -22,13 +22,13 @@ defmodule Spout do
 
   def handle_event({:suite_finished, _run_us, _load_us}, config) do
     # Generate the TAP lines
-    tap_output = tapify(config, 0)
+    tap_output = tapify(config.test_cases, config.total)
 
     # Save the report to file
     file = File.open! get_file_name(config), [:write]
     List.foreach(fn(line) ->
-                          :io.format(file, "~s~n", [line])
-                  end, tap_output)
+      IO.binwrite(file, line)
+    end, tap_output)
     File.close file
 
     # Release handler
@@ -155,7 +155,7 @@ defmodule Spout do
   #    [diagnostic_line(Line) || Line <- Lines].
 
   defp get_file_name(_config) do
-    report = Application.get_env :spout, :filename, "test_report.tap"
+    report = Application.get_env :spout, :filename, @default_tap_filename
     Mix.Project.build_path <> "/" <> report
   end
 end
