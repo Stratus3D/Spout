@@ -11,7 +11,7 @@ defmodule Spout do
 
   ## Formatter callbacks: may use opts in the future to configure file name pattern
   def init(_opts) do
-    {:ok, []}
+    {:ok, %SpoutStats{timestamp: timestamp()}}
   end
 
   def handle_event({:suite_started, _opts}, config) do
@@ -35,25 +35,33 @@ defmodule Spout do
     :remove_handler
   end
 
+  def handle_event({:case_started, case}, config) do
+    {:ok, config}
+  end
+
+  def handle_event({:case_finished, case}, config) do
+    {:ok, config}
+  end
+
   def handle_event({:test_finished, %ExUnit.Test{state: nil}}, config) do
     {:ok, config}
   end
 
   def handle_event({:test_finished, %ExUnit.Test{state: {:skip, _}} = test}, config) do
     data = {:testcase, test, :skipped, :timer.now_diff(timestamp(), config.timestamp)}
-    {:ok, Keyword.put(config, :test_cases, [data|config.test_cases])}
+    {:ok, %{config | test_cases: [data|config.test_cases]}}
   end
 
   def handle_event({:test_finished, %ExUnit.Test{state: {:failed, _failed}} = test}, config) do
     return = :failed # TODO: Figure out the real return value
     data = {:testcase, test, return, :timer.now_diff(timestamp(), config.timestamp)}
-    {:ok, Keyword.put(config, :test_cases, [data|config.test_cases])}
+    {:ok, %{config | test_cases: [data|config.test_cases]}}
   end
 
   def handle_event({:test_finished, %ExUnit.Test{state: {:invalid, _module}} = test}, config) do
     return = :invalid # TODO: Figure out the real return value
     data = {:testcase, test, return, :timer.now_diff(timestamp(), config.timestamp)}
-    {:ok, Keyword.put(config, :test_cases, [data|config.test_cases])}
+    {:ok, %{config | test_cases: [data|config.test_cases]}}
   end
 
   def handle_event(_event, config) do
