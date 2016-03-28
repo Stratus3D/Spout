@@ -26,9 +26,9 @@ defmodule Spout do
 
     # Save the report to file
     file = File.open! get_file_name(config), [:write]
-    List.foreach(fn(line) ->
+    Enum.each(tap_output, fn(line) ->
       IO.binwrite(file, line)
-    end, tap_output)
+    end)
     File.close file
 
     # Release handler
@@ -76,6 +76,9 @@ defmodule Spout do
 
   defp process_suites([], count, output) do
     {output, count}
+  end
+  defp process_suites([{:testcase, test, return, time}|test_cases], count, output) do
+    {output, count} # TODO: Update stats so this clause is not needed
   end
   defp process_suites([{:suites, suite, status, _Num, test_cases}|suites], count, output) do
     header = diagnostic_line(["Starting ", Atom.to_list(suite)])
