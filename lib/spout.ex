@@ -120,7 +120,7 @@ defmodule Spout do
   end
 
   defp test_plan_line(num_tests) do
-    :io_lib.format("1..~B", [num_tests])
+    "1..#{num_tests}"
   end
 
   # I can't think of a reason all the test suites would need to abort
@@ -134,23 +134,23 @@ defmodule Spout do
   #end
 
   defp test_success(number, description) do
-    :io_lib.format("ok ~B ~s", [number, description])
+    "ok #{number} #{description}"
   end
 
   defp test_fail(number, description) do
-    :io_lib.format("not ok ~B ~s", [number, description])
+    "not ok #{number} #{description}"
   end
 
   defp test_skip(number, description, reason) do
-    :io_lib.format("ok ~B ~s # SKIP ~s", [number, description, reason])
+    "ok #{number} #{description} # SKIP #{reason}"
   end
 
   defp test_todo(number, description, reason) do
     case reason do
       :undefined ->
-        :io_lib.format("not ok ~B ~s # TODO", [number, description])
+        "not ok #{number} #{description} # TODO"
       _ ->
-        :io_lib.format("not ok ~B ~s # TODO ~s", [number, description, reason])
+        "not ok #{number} #{description} # TODO #{reason}"
     end
   end
 
