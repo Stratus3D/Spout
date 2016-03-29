@@ -28,6 +28,7 @@ defmodule Spout do
     file = File.open! get_file_name(config), [:write]
     Enum.each(tap_output, fn(line) ->
       IO.binwrite(file, line)
+      IO.binwrite(file, "\n")
     end)
     File.close file
 
