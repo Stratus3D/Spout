@@ -66,42 +66,24 @@ defmodule Spout do
 
   # Private functions
   defp tapify(data, total) do
-    {output, _Count} = process_suites(data, 1, [])
+    {output, _Count} = process_testcases(data, 1, [])
     [version(), test_plan_line(total) |Enum.reverse(output)]
-  end
-
-  defp process_suites([], count, output) do
-    {output, count}
-  end
-  defp process_suites([{:testcase, test, return, time}|test_cases], count, output) do
-    {output, count} # TODO: Update stats so this clause is not needed
-  end
-  defp process_suites([{:suites, suite, status, _Num, test_cases}|suites], count, output) do
-    header = diagnostic_line(["Starting ", Atom.to_list(suite)])
-    footer = case status do
-                 :skipped ->
-                     diagnostic_line(["Skipped ", Atom.to_list(suite)])
-                 :ran ->
-                     diagnostic_line(["Completed ", Atom.to_list(suite)])
-             end
-    {testcase_output, new_count} = process_testcases(test_cases, count, [header|output])
-    process_suites(suites, new_count, [footer|testcase_output])
   end
 
   defp process_testcases([], count, output) do
     {output, count}
   end
-  defp process_testcases([{:testcase, name, return, _Num}|test_cases], count, output) do
+  defp process_testcases([{:testcase, test, return, _Num}|test_cases], count, output) do
     # TODO: Figure out how to access the IO log here and log IO as diagnostic output
     line = case return do
         {:skip, :todo} ->
-            test_todo(count, name, :undefined)
+            test_todo(count, Atom.to_string(test.name), :undefined)
         {:skip, reason} ->
-            test_skip(count, name, reason)
+            test_skip(count, Atom.to_string(test.name), reason)
         {:error, reason} ->
-            test_fail(count, [Atom.to_list(name), " reason: ", :io_lib.format("~w", [reason])])
+            test_fail(count, [Atom.to_string(test.name), " reason: #{reason}"])
         value ->
-            test_success(count, [Atom.to_list(name), " return value: ", :io_lib.format("~w", [value])])
+            test_success(count, [Atom.to_string(test.name), " return value: #{value}"])
     end
     process_testcases(test_cases, count + 1, [line|output])
   end
