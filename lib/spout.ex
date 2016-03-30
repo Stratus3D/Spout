@@ -30,18 +30,13 @@ defmodule Spout do
       IO.binwrite(file, line)
       IO.binwrite(file, "\n")
     end)
+
+    # TODO: Log the run and load times at the end of the test
+
     File.close file
 
     # Release handler
     :remove_handler
-  end
-
-  def handle_event({:case_started, case}, config) do
-    {:ok, config}
-  end
-
-  def handle_event({:case_finished, case}, config) do
-    {:ok, config}
   end
 
   def handle_event({:test_finished, %ExUnit.Test{state: nil}}, config) do
