@@ -26,8 +26,9 @@ If you want to keep using the default formatter alongside Spout your `test/test_
 
 * A TAP producer for Erlang's Common Test: [https://github.com/Stratus3D/cttap](https://github.com/Stratus3D/cttap)
 
-#TODO
+##TODO
 * Add option to specify filename
+* Sort output. It currently outputs test result lines in the same random order the test were run in. I think we can sort on filename and line number.
 
 ##Known Issues
 No known issues.
