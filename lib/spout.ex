@@ -39,10 +39,6 @@ defmodule Spout do
     :remove_handler
   end
 
-  def handle_event({:test_finished, %ExUnit.Test{state: nil}}, config) do
-    {:ok, config}
-  end
-
   def handle_event({:test_finished, %ExUnit.Test{state: {:skip, _}} = test}, config) do
     data = {:testcase, test, :skipped, :timer.now_diff(timestamp(), config.timestamp)}
     {:ok, %{config | test_cases: [data|config.test_cases]}}
@@ -60,6 +56,23 @@ defmodule Spout do
     {:ok, %{config | test_cases: [data|config.test_cases]}}
   end
 
+  def handle_event({:test_finished, %ExUnit.Test{state: nil, tags: tags} = test}, config) do
+    case tags do
+       %{todo: true} ->
+         data = {:testcase, test, {:skip, :todo}, :timer.now_diff(timestamp(), config.timestamp)}
+         {:ok, %{config | test_cases: [data|config.test_cases]}}
+      _ ->
+         data = {:testcase, test, :ok, :timer.now_diff(timestamp(), config.timestamp)}
+         {:ok, %{config | test_cases: [data|config.test_cases]}}
+    end
+  end
+
+  def handle_event({:test_finished, test}, config) do
+    IO.puts "Got an unexpect type of test: #{test}"
+    {:ok, config}
+  end
+
+
   def handle_event(_event, config) do
     {:ok, config}
   end
@@ -74,6 +87,7 @@ defmodule Spout do
     {output, count}
   end
   defp process_testcases([{:testcase, test, return, _Num}|test_cases], count, output) do
+    # TODO: Add code to handle 'case' (or module) changes, and log them accordingly
     # TODO: Figure out how to access the IO log here and log IO as diagnostic output
     line = case return do
         {:skip, :todo} ->
