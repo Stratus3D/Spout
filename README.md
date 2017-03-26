@@ -1,6 +1,6 @@
 # Spout [![Build Status](https://travis-ci.org/Stratus3D/Spout.svg?branch=master)](https://travis-ci.org/Stratus3D/Spout)
 
-*A TAP producer that integrates with existing ExUnit tests via an ExUnit formatter*
+**A TAP producer that integrates with existing ExUnit tests via an ExUnit formatter**
 
 Spout provides a simple way to generate TAP output without having to modify existing test code.
 
