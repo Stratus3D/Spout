@@ -27,6 +27,7 @@ If you want to keep using the default formatter alongside Spout your `test/test_
 ## Similar Projects
 
 * A TAP producer for Erlang's Common Test: [https://github.com/Stratus3D/cttap](https://github.com/Stratus3D/cttap)
+* Another TAP producer for Elixir: [https://github.com/joshwlewis/tapex](https://github.com/joshwlewis/tapex)
 
 ## TODO
 
