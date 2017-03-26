@@ -42,8 +42,8 @@ Example configuration:
 
 ## TODO
 
-* Add option to specify filename
 * Sort output. It currently outputs test result lines in the same random order the test were run in. I think we can sort on filename and line number.
+* Add color
 
 ## Known Issues
 
