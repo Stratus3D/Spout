@@ -1,13 +1,6 @@
 defmodule SpoutTest do
   use ExUnit.Case
 
-  @tag :skip
-  test "badmatch example" do
-    a = [{:foo, :bar, :baz}, {:foo, :bar, :bar}, {:foo, :bar, :baz}, {:foo, :bar, :baz}]
-    b = [{:foo, :bar, :baz}, {:foo, :bar, :baz}, {:foo, :bar, :baz}, {:foo, :bar, :baz}]
-    assert a == b
-  end
-
   test "validate output" do
     defmodule SpoutUsageTest do
       use ExUnit.Case
@@ -88,11 +81,11 @@ defmodule SpoutTest do
       end
     end
 
-    ExUnit.configure formatters: [Spout]
+    # Tests must run in the same order every time, so we use seed: 0
+    ExUnit.configure formatters: [Spout], seed: 0
     ExUnit.run
     path = Mix.Project.build_path <> "/foobar"
     {:ok, tap_output} = :file.read_file(path)
-    IO.puts "tap output:"
     IO.binwrite(tap_output)
 
     lines = :binary.split(tap_output, "\n", [:global])
@@ -102,21 +95,15 @@ defmodule SpoutTest do
     "TAP version 13" = version
 
     # Next comes the passing suite
-    [suite_header, passing_1, passing_2, passing_3, suite_footer|skipped_suite] = tests
-
-    # Header and footer should include the suite name
-    "# Starting cttap_usage_passing_SUITE" = suite_header
-    "# Completed cttap_usage_passing_SUITE" = suite_footer
+    [passing_1, passing_2, passing_3|skipped_suite] = tests
 
     # Passing tests
-    passing_test(passing_1, 1, :passing_test_1, :ok)
-    passing_test(passing_2, 2, :passing_test_2, :ok)
+    passing_test(passing_1, 1, "passing test", :ok)
+    failing_test(passing_2, 2, "failing test", "failed")
     passing_test(passing_3, 3, :passing_test_3, :ok)
 
     # Next is the skipped test suite
-    [skipped_suite_header, skipped_suite_footer|usage_suite] = skipped_suite
-    "# Starting cttap_usage_bail_out_SUITE" = skipped_suite_header
-    "# Skipped cttap_usage_bail_out_SUITE" = skipped_suite_footer
+    usage_suite = skipped_suite
 
     # Then the usage suite
     [usage_suite_header, passing_ok, failing, passing_description, todo, skip, diagnostic|groups] = usage_suite
@@ -169,35 +156,31 @@ defmodule SpoutTest do
   end
 
   # Private functions
-  defp passing_test(line, number, test, return) do
-    test_name = Atom.to_binary(test, :utf8)
-    number_bin = Integer.to_binary(number)
-    return_bin = List.to_binary(:io_lib.format("~w", [return]))
-    expected = <<"ok ", number_bin, " ", test_name, " return value: ", return_bin>>
+  defp passing_test(line, number, test_name, return) do
+    number_bin = Integer.to_string(number)
+    return_bin = IO.iodata_to_binary(:io_lib.format("~w", [return]))
+    expected = <<"ok ", number_bin :: binary, " test ", test_name :: binary, " return value: ", return_bin :: binary>>
+    IO.inspect expected
     ^expected = line
   end
 
   defp failing_test(line, number, test) do
     failing_test(line, number, test, :undefined)
   end
-  defp failing_test(line, number, test, reason) do
-    test_name = Atom.to_binary(test, :latin1)
-    number_bin = Integer.to_binary(number)
-    expected = <<"not ok ", number_bin, " ", test_name, " reason:">>
+  defp failing_test(line, number, test_name, reason) do
+    number_bin = Integer.to_string(number)
+    expected = <<"not ok ", number_bin :: binary, " ", test_name :: binary, " reason:">>
     case reason do
-      :undefined ->
-        {0, _} = :binary.match(line, expected, [])
-          _ when is_binary(reason) ->
-            expected_with_reason = <<expected, " ", reason>>
-            {0, _} = :binary.match(line, expected_with_reason, [])
+      _ when is_binary(reason) ->
+        expected_with_reason = <<expected :: binary, " ", reason :: binary>>
+        {0, _} = :binary.match(line, expected_with_reason, [])
+          :undefined ->
+            {0, _} = :binary.match(line, expected, [])
             end
   end
 
-  defp skipped_test(line, number, test) do
-    skipped_test(line, number, test, :undefined)
-  end
   defp skipped_test(line, number, test, reason) do
-    test_name = Atom.to_binary(test, :latin1)
+    test_name = Atom.to_string(test)
     number_bin = Integer.to_binary(number)
     expected = <<"ok ", number_bin, " ", test_name, " # SKIP">>
     case reason do
@@ -210,7 +193,7 @@ defmodule SpoutTest do
   end
 
   defp todo_test(line, number, test) do
-    test_name = Atom.to_binary(test, :latin1)
+    test_name = Atom.to_string(test, :latin1)
     number_bin = Integer.to_binary(number)
     expected = <<"not ok ", number_bin, " ", test_name, " # TODO">>
     ^expected = line
