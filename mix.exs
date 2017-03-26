@@ -30,7 +30,7 @@ defmodule Spout.Mixfile do
   #
   # Type `mix help deps` for more examples and options
   defp deps do
-    []
+    [{:ex_doc, "~> 0.14", only: :dev, runtime: false}]
   end
 
   defp description do
@@ -40,7 +40,8 @@ defmodule Spout.Mixfile do
   end
 
   defp package do
-    [# These are the default files included in the package
+    [
+      # These are the default files included in the package
       files: ["lib", "priv", "mix.exs", "README.md", "LICENSE"],
       maintainers: ["Trevor Brown"],
       licenses: ["MIT"],
