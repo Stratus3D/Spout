@@ -9,7 +9,14 @@ defmodule Spout do
 
   ## Formatter callbacks: may use opts in the future to configure file name pattern
   def init(opts) do
-    {:ok, %SpoutState{io_device: get_io_device(opts), timestamp: timestamp()}}
+    #colorize = case get_in(opts, [:colors, :enabled]) do
+    #  nil     -> IO.ANSI.enabled?
+    #  enabled -> enabled
+    #end
+
+    io_device = get_io_device(opts)
+    write_line(io_device, version())
+    {:ok, %SpoutState{io_device: io_device, timestamp: timestamp()}}
   end
 
   def handle_event({:suite_started, _opts}, config) do
@@ -19,16 +26,10 @@ defmodule Spout do
 
   def handle_event({:suite_finished, _run_us, _load_us}, config) do
     io = config.io_device
-    # Generate the TAP lines
-    tap_output = tapify(config.test_cases, config.total)
 
-    # Save the report to file
-    Enum.each(tap_output, fn(line) ->
-      write_line(io, line)
-    end)
-
-    IO.binwrite(io, "config: ")
-    IO.inspect(io, config, [])
+    write_line(io, test_plan_line(config.total))
+    #IO.binwrite(io, "config: ")
+    #IO.inspect(io, config, [])
     # TODO: Log the run and load times at the end of the test
 
     File.close io
@@ -38,30 +39,30 @@ defmodule Spout do
   end
 
   def handle_event({:test_finished, %ExUnit.Test{state: {:skip, _}} = test}, config) do
-    data = {:testcase, test, :skipped, :timer.now_diff(timestamp(), config.timestamp)}
-    {:ok, %{config | test_cases: [data|config.test_cases]}}
+    data = {:testcase, test, :skip, :timer.now_diff(timestamp(), config.timestamp)}
+    {:ok, log_testcase(config, data)}
   end
 
   def handle_event({:test_finished, %ExUnit.Test{state: {:failed, _failed}} = test}, config) do
     return = :failed # TODO: Figure out the real return value
     data = {:testcase, test, return, :timer.now_diff(timestamp(), config.timestamp)}
-    {:ok, %{config | test_cases: [data|config.test_cases]}}
+    {:ok, log_testcase(config, data)}
   end
 
   def handle_event({:test_finished, %ExUnit.Test{state: {:invalid, _module}} = test}, config) do
     return = :invalid # TODO: Figure out the real return value
     data = {:testcase, test, return, :timer.now_diff(timestamp(), config.timestamp)}
-    {:ok, %{config | test_cases: [data|config.test_cases]}}
+    {:ok, log_testcase(config, data)}
   end
 
   def handle_event({:test_finished, %ExUnit.Test{state: nil, tags: tags} = test}, config) do
     case tags do
        %{todo: true} ->
          data = {:testcase, test, {:skip, :todo}, :timer.now_diff(timestamp(), config.timestamp)}
-         {:ok, %{config | test_cases: [data|config.test_cases]}}
+         {:ok, log_testcase(config, data)}
       _ ->
          data = {:testcase, test, :ok, :timer.now_diff(timestamp(), config.timestamp)}
-         {:ok, %{config | test_cases: [data|config.test_cases]}}
+         {:ok, log_testcase(config, data)}
     end
   end
 
@@ -75,28 +76,22 @@ defmodule Spout do
   end
 
   # Private functions
-  defp tapify(data, total) do
-    {output, _Count} = process_testcases(data, 1, [])
-    [version(), test_plan_line(total) |Enum.reverse(output)]
-  end
+  defp log_testcase(config, {_, test, return, _} = data) do
+    new_count = config.total + 1
 
-  defp process_testcases([], count, output) do
-    {output, count}
-  end
-  defp process_testcases([{:testcase, test, return, _Num}|test_cases], count, output) do
-    # TODO: Add code to handle 'case' (or module) changes, and log them accordingly
     # TODO: Figure out how to access the IO log here and log IO as diagnostic output
     line = case return do
         {:skip, :todo} ->
-            test_todo(count, Atom.to_string(test.name), :undefined)
+            test_todo(config.io_device, new_count, Atom.to_string(test.name), :undefined)
         {:skip, reason} ->
-            test_skip(count, Atom.to_string(test.name), reason)
+            test_skip(config.io_device, new_count, Atom.to_string(test.name), reason)
         {:error, reason} ->
-            test_fail(count, [Atom.to_string(test.name), " reason: #{reason}"])
+            test_fail(config.io_device, new_count, [Atom.to_string(test.name), " reason: #{reason}"])
         value ->
-            test_success(count, [Atom.to_string(test.name), " return value: #{value}"])
+            test_success(config.io_device, new_count, [Atom.to_string(test.name), " return value: #{value}"])
     end
-    process_testcases(test_cases, count + 1, [line|output])
+
+    %{config | total: new_count, test_cases: [data|config.test_cases]}
   end
 
   defp timestamp() do
@@ -122,25 +117,26 @@ defmodule Spout do
   #    :io_lib.format("1..~B ~s", [NumTests, Reason])
   #end
 
-  defp test_success(number, description) do
-    "ok #{number} #{description}"
+  defp test_success(io_device, number, description) do
+    write_line(io_device, "ok #{number} #{description}")
   end
 
-  defp test_fail(number, description) do
-    "not ok #{number} #{description}"
+  defp test_fail(io_device, number, description) do
+    write_line(io_device, "not ok #{number} #{description}")
   end
 
-  defp test_skip(number, description, reason) do
-    "ok #{number} #{description} # SKIP #{reason}"
+  defp test_skip(io_device, number, description, reason) do
+    write_line(io_device, "ok #{number} #{description} # SKIP #{reason}")
   end
 
-  defp test_todo(number, description, reason) do
-    case reason do
+  defp test_todo(io_device, number, description, reason) do
+    line = case reason do
       :undefined ->
         "not ok #{number} #{description} # TODO"
       _ ->
         "not ok #{number} #{description} # TODO #{reason}"
     end
+    write_line(io_device, line)
   end
 
   defp diagnostic_line(message) do

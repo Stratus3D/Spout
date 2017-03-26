@@ -4,7 +4,8 @@ defmodule SpoutTest do
   # TODO: Figure out how to run an ExUnit test suite within this one. This
   # command does not start another ExUnit run with the tests in example_tests/
   setup_all do
-    {_result, 1} = System.cmd("mix", ["test", "example_tests"])
+    {result, 1} = System.cmd("mix", ["test", "example_tests"])
+    IO.inspect(result)
     :ok
   end
 
@@ -18,18 +19,15 @@ defmodule SpoutTest do
   test "validate output" do
     # Copied from init_per_suite
 
-    path = Mix.Project.build_path <> "/test_report.tap"
+    path = Mix.Project.build_path <> "/foobar"
     {:ok, tap_output} = :file.read_file(path)
     IO.inspect(tap_output)
 
     lines = :binary.split(tap_output, "\n", [:global])
-    [version, test_plan|tests] = lines
+    [version|tests] = lines
 
     # First line should be the version
     "TAP version 13" = version
-
-    # Second line should be the test plan (skipped suite is excluded the report)
-    "1..16" = test_plan
 
     # Next comes the passing suite
     [suite_header, passing_1, passing_2, passing_3, suite_footer|skipped_suite] = tests
@@ -82,12 +80,16 @@ defmodule SpoutTest do
     "# Completed todo group. return value: ok" = todo_group_footer
 
     # Order group
-    [order_group_header, order_group_test_1, order_group_test_2, order_group_test_3, order_group_footer, usage_suite_footer, _] = order_group
+    [order_group_header, order_group_test_1, order_group_test_2, order_group_test_3, order_group_footer, usage_suite_footer, footer_lines] = order_group
     "# Starting order group" = order_group_header
     passing_test(order_group_test_1, 14, :group_order_1, :ok)
     failing_test(order_group_test_2, 15, :group_order_2, "{{badmatch,2},[{cttap_usage_SUITE,group_order_2,1,[{")
     passing_test(order_group_test_3, 16, :group_order_3, :ok)
     "# Completed order group. return value: ok" = order_group_footer
+
+    # Last line should be the test plan (skipped suite is excluded the report)
+    [test_plan] = footer_lines
+    "1..16" = test_plan
 
     # Header and footer include the suite name
     "# Starting cttap_usage_SUITE" = usage_suite_header
