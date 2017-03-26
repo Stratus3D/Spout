@@ -1,2 +1,2 @@
-ExUnit.configure formatters: [Spout, ExUnit.CLIFormatter]
+ExUnit.configure formatters: [Spout]
 ExUnit.start()

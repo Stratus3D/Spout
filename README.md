@@ -2,7 +2,7 @@
 
 *A TAP producer that integrates with existing ExUnit tests via an ExUnit formatter*
 
-A TAP producer that integrates with existing ExUnit test suites via a ExUnit formatter. Spout provides a simple way to generate TAP output without having to modify existing test code.
+Spout provides a simple way to generate TAP output without having to modify existing test code.
 
 ## Installation
 
@@ -23,6 +23,17 @@ If you want to keep using the default formatter alongside Spout your `test/test_
 
     ExUnit.configure formatters: [Spout, ExUnit.CLIFormatter]
     ExUnit.start()
+
+### Options
+
+`Spout` accepts one option that you can set in your `config.exs` file:
+
+* `file` (binary) - defaults to printing to STDOUT if this option is not specified. This is the file TAP output will be written to.
+
+Example configuration:
+
+    config :spout,
+      file: "tap_output.tap"
 
 ## Similar Projects
 

@@ -7,10 +7,8 @@ defmodule Spout do
 
   use GenEvent
 
-  @default_tap_filename "tap_output"
-
   ## Formatter callbacks: may use opts in the future to configure file name pattern
-  def init(_opts) do
+  def init(opts) do
     {:ok, %SpoutStats{timestamp: timestamp()}}
   end
 
@@ -25,15 +23,16 @@ defmodule Spout do
     tap_output = tapify(config.test_cases, config.total)
 
     # Save the report to file
-    file = File.open! get_file_name(config), [:write]
+    io = get_io_device(config)
     Enum.each(tap_output, fn(line) ->
-      IO.binwrite(file, line)
-      IO.binwrite(file, "\n")
+      write_line(io, line)
     end)
 
+    IO.binwrite(io, "config: ")
+    IO.inspect(io, config, [])
     # TODO: Log the run and load times at the end of the test
 
-    File.close file
+    File.close io
 
     # Release handler
     :remove_handler
@@ -67,11 +66,10 @@ defmodule Spout do
     end
   end
 
-  def handle_event({:test_finished, test}, config) do
+  def handle_event({:test_finished, %ExUnit.Test{} = test}, config) do
     IO.puts "Got an unexpect type of test: #{test}"
     {:ok, config}
   end
-
 
   def handle_event(_event, config) do
     {:ok, config}
@@ -157,8 +155,23 @@ defmodule Spout do
   #    Lines = binary:split(Message, <<"~n">>, [global]),
   #    [diagnostic_line(Line) || Line <- Lines].
 
-  defp get_file_name(_config) do
-    report = Application.get_env :spout, :filename, @default_tap_filename
-    Mix.Project.build_path <> "/" <> report
+  defp write_line(io, line) do
+    IO.binwrite(io, line)
+    IO.binwrite(io, "\n")
+  end
+
+  defp get_io_device(config) do
+    case get_filename(config) do
+      :nil ->
+        # STDOUT
+        :stdio
+      filename ->
+        # Save the report to file
+        File.open!(Mix.Project.build_path <> "/" <> filename, [:write])
+    end
+  end
+
+  defp get_filename(_config) do
+    Application.get_env :spout, :file
   end
 end
