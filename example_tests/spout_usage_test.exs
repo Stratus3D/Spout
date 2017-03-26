@@ -8,14 +8,15 @@ defmodule SpoutUsageTest do
 
   test "failing test" do
     # Failing test (badmatch)
-    1 = 2
+    assert 1 = 2
   end
 
-  test "test description" do
+  test "description" do
     # Description should just be the test function name
     :ok
   end
 
+  @tag :todo
   test "todo test" do
     # todo test
     {:skip, :todo}
@@ -24,7 +25,7 @@ defmodule SpoutUsageTest do
   @tag :skip
   test "skip test" do
     # Skip this test
-    {:skip, "I'm lazy"}
+    _ = "I'm lazy"
   end
 
   test "diagnostic test" do
@@ -40,10 +41,10 @@ defmodule SpoutUsageTest do
 
   test "failing test in group" do
     # Failing test in group (badmatch)
-    1 = 2
+    assert 1 = 2
   end
 
-  test "test description in group" do
+  test "description in group" do
     # Description should just be the test function name and group name
     :ok
   end
@@ -67,7 +68,7 @@ defmodule SpoutUsageTest do
 
   test "group order 2" do
     # Failing test (badmatch)
-    1 = 2
+    assert 1 = 2
   end
 
   test "group order 3" do
