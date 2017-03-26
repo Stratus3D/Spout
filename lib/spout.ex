@@ -9,21 +9,20 @@ defmodule Spout do
 
   ## Formatter callbacks: may use opts in the future to configure file name pattern
   def init(opts) do
-    {:ok, %SpoutStats{timestamp: timestamp()}}
+    {:ok, %SpoutState{io_device: get_io_device(opts), timestamp: timestamp()}}
   end
 
   def handle_event({:suite_started, _opts}, config) do
     # TODO: Add header
-
     {:ok, config}
   end
 
   def handle_event({:suite_finished, _run_us, _load_us}, config) do
+    io = config.io_device
     # Generate the TAP lines
     tap_output = tapify(config.test_cases, config.total)
 
     # Save the report to file
-    io = get_io_device(config)
     Enum.each(tap_output, fn(line) ->
       write_line(io, line)
     end)
