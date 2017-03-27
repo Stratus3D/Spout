@@ -79,17 +79,15 @@ defmodule Spout do
     new_count = config.total + 1
 
     # TODO: Figure out how to access the IO log here and log IO as diagnostic output
-    line = case return do
-        {:skip, :todo} ->
-            test_todo(config.io_device, new_count, Atom.to_string(test.name), nil)
-        :skip ->
-            test_skip(config.io_device, new_count, Atom.to_string(test.name))
-        {:error, reason} ->
-            test_fail(config.io_device, new_count, [Atom.to_string(test.name), " reason: #{reason}"])
-        :failed ->
-            test_fail(config.io_device, new_count, Atom.to_string(test.name))
-        :ok ->
-          test_success(config.io_device, new_count, Atom.to_string(test.name))
+    case return do
+      {:skip, :todo} ->
+        test_todo(config.io_device, new_count, Atom.to_string(test.name), nil)
+      :skip ->
+        test_skip(config.io_device, new_count, Atom.to_string(test.name))
+      :failed ->
+        test_fail(config.io_device, new_count, Atom.to_string(test.name))
+      :ok ->
+        test_success(config.io_device, new_count, Atom.to_string(test.name))
     end
 
     %{config | total: new_count, test_cases: [data|config.test_cases]}
