@@ -20,7 +20,6 @@ defmodule Spout do
   end
 
   def handle_event({:suite_started, _opts}, config) do
-    # TODO: Add header
     {:ok, config}
   end
 
@@ -82,13 +81,15 @@ defmodule Spout do
     # TODO: Figure out how to access the IO log here and log IO as diagnostic output
     line = case return do
         {:skip, :todo} ->
-            test_todo(config.io_device, new_count, Atom.to_string(test.name), :undefined)
-        {:skip, reason} ->
-            test_skip(config.io_device, new_count, Atom.to_string(test.name), reason)
+            test_todo(config.io_device, new_count, Atom.to_string(test.name), nil)
+        :skip ->
+            test_skip(config.io_device, new_count, Atom.to_string(test.name))
         {:error, reason} ->
             test_fail(config.io_device, new_count, [Atom.to_string(test.name), " reason: #{reason}"])
-        value ->
-            test_success(config.io_device, new_count, [Atom.to_string(test.name), " return value: #{value}"])
+        :failed ->
+            test_fail(config.io_device, new_count, Atom.to_string(test.name))
+        :ok ->
+          test_success(config.io_device, new_count, Atom.to_string(test.name))
     end
 
     %{config | total: new_count, test_cases: [data|config.test_cases]}
@@ -125,13 +126,13 @@ defmodule Spout do
     write_line(io_device, "not ok #{number} #{description}")
   end
 
-  defp test_skip(io_device, number, description, reason) do
-    write_line(io_device, "ok #{number} #{description} # SKIP #{reason}")
+  defp test_skip(io_device, number, description) do
+    write_line(io_device, "ok #{number} #{description} # SKIP")
   end
 
   defp test_todo(io_device, number, description, reason) do
     line = case reason do
-      :undefined ->
+      nil ->
         "not ok #{number} #{description} # TODO"
       _ ->
         "not ok #{number} #{description} # TODO #{reason}"
