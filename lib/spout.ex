@@ -37,7 +37,7 @@ defmodule Spout do
     :remove_handler
   end
 
-  def handle_event({:test_finished, %ExUnit.Test{state: {:skip, _}} = test}, config) do
+  def handle_event({:test_finished, %ExUnit.Test{tags: %{skip: true}} = test}, config) do
     data = {:testcase, test, :skip, :timer.now_diff(timestamp(), config.timestamp)}
     {:ok, log_testcase(config, data)}
   end
