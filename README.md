@@ -35,6 +35,17 @@ Example configuration:
     config :spout,
       file: "tap_output.tap"
 
+## Sample Output
+
+    TAP version 13
+    ok 1 test passing test
+    not ok 2 test failing test
+    ok 3 test description
+    not ok 4 test todo test # TODO
+    ok 5 test skip test # SKIP
+    ok 6 test diagnostic test
+    1..6
+
 ## Similar Projects
 
 * A TAP producer for Erlang's Common Test: [https://github.com/Stratus3D/cttap](https://github.com/Stratus3D/cttap)
