@@ -45,7 +45,7 @@ defmodule Spout.Mixfile do
   defp package do
     [
       # These are the default files included in the package
-      files: ["lib", "priv", "mix.exs", "README.md", "LICENSE"],
+      files: ["lib", "mix.exs", "README.md", "LICENSE"],
       maintainers: ["Trevor Brown"],
       licenses: ["MIT"],
       links: %{"GitHub" => "https://github.com/Stratus3D/Spout"}
